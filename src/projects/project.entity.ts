@@ -1,6 +1,7 @@
 import { ApiHideProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { Phase } from 'src/phases/phase.entity';
+import { User } from 'src/users/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -8,6 +9,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  RelationId,
 } from 'typeorm';
 
 @Entity()
@@ -31,4 +34,12 @@ export class Project {
   @Exclude()
   @OneToMany(() => Phase, (phase) => phase.project, { cascade: true })
   phases: Phase[];
+
+  @ApiHideProperty()
+  @Exclude()
+  @ManyToOne(() => User, (user) => user.projects, { onDelete: 'CASCADE' })
+  user: User;
+
+  @RelationId((project: Project) => project.user)
+  userId: string;
 }

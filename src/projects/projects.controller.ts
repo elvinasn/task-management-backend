@@ -3,12 +3,11 @@ import {
   Get,
   Post,
   Body,
-  Param,
   Patch,
   Delete,
   HttpStatus,
   HttpCode,
-  ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -23,6 +22,12 @@ import {
 } from '@nestjs/swagger';
 import { PhasesService } from 'src/phases/phases.service';
 import { CreatePhaseDto } from 'src/phases/dto/create-phase.dto';
+import { JwtAuthGuard, OptionalJwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { GetUser } from 'src/users/get-user.decorator';
+import { User } from 'src/users/user.entity';
+import { IncludeMockProject, ProjectGuard } from './project.guard';
+import { GetProject } from './get-project.decorator';
+import { Project } from './project.entity';
 
 @Controller('projects')
 @ApiTags('Projects')
@@ -39,17 +44,20 @@ export class ProjectsController {
   })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @ApiOperation({ summary: 'Create a project' })
-  create(@Body() createProjectDto: CreateProjectDto) {
+  @UseGuards(JwtAuthGuard)
+  create(@GetUser() user: User, @Body() createProjectDto: CreateProjectDto) {
     return this.projectsService.create(
       createProjectDto.name,
       createProjectDto.description,
+      user,
     );
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all projects' })
-  findAll() {
-    return this.projectsService.findAll();
+  @UseGuards(OptionalJwtAuthGuard)
+  findAll(@GetUser() user: User | undefined) {
+    return this.projectsService.findAll(user);
   }
 
   @Get(':id')
@@ -62,8 +70,9 @@ export class ProjectsController {
     description: 'Record not found',
   })
   @ApiOperation({ summary: 'Get a project by ID' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.projectsService.findOne(id);
+  @UseGuards(JwtAuthGuard, ProjectGuard)
+  findOne(@GetProject() project: Project) {
+    return project;
   }
 
   @Patch(':id')
@@ -80,12 +89,13 @@ export class ProjectsController {
     description: 'Bad Request',
   })
   @ApiOperation({ summary: 'Update a project' })
+  @UseGuards(JwtAuthGuard, ProjectGuard)
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @GetProject() project: Project,
     @Body() updateProjectDto: UpdateProjectDto,
   ) {
     return this.projectsService.update(
-      id,
+      project.id,
       updateProjectDto.name,
       updateProjectDto.description,
     );
@@ -102,8 +112,9 @@ export class ProjectsController {
     description: 'Record not found',
   })
   @ApiOperation({ summary: 'Delete a project' })
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.projectsService.remove(id);
+  @UseGuards(JwtAuthGuard, ProjectGuard)
+  remove(@GetProject() project: Project) {
+    return this.projectsService.remove(project.id);
   }
 
   @Post(':id/phases')
@@ -116,12 +127,13 @@ export class ProjectsController {
     description: 'Start date must be before end date',
   })
   @ApiOperation({ summary: 'Create a phase' })
+  @UseGuards(JwtAuthGuard, ProjectGuard)
   createPhase(
-    @Param('id', ParseUUIDPipe) id: string,
+    @GetProject() project: Project,
     @Body() createPhaseDto: CreatePhaseDto,
   ) {
     return this.phasesService.create(
-      id,
+      project.id,
       createPhaseDto.name,
       createPhaseDto.description,
       createPhaseDto.startDate,
@@ -131,7 +143,9 @@ export class ProjectsController {
 
   @Get(':id/phases')
   @ApiOperation({ summary: 'Get all phases of a project' })
-  findAllPhases(@Param('id', ParseUUIDPipe) id: string) {
-    return this.phasesService.findAllByProject(id);
+  @IncludeMockProject(true)
+  @UseGuards(OptionalJwtAuthGuard, ProjectGuard)
+  findAllPhases(@GetProject() project: Project) {
+    return this.phasesService.findAllByProject(project.id);
   }
 }

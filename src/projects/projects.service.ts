@@ -2,6 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './project.entity';
+import { User } from 'src/users/user.entity';
+import { UserRole } from 'src/users/user-role.enum';
+import { MockProject } from 'src/mock-data';
 
 @Injectable()
 export class ProjectsService {
@@ -10,13 +13,26 @@ export class ProjectsService {
     private projectsRepository: Repository<Project>,
   ) {}
 
-  create(name: string, description: string): Promise<Project> {
-    const newProject = this.projectsRepository.create({ name, description });
+  create(name: string, description: string, user: User): Promise<Project> {
+    const newProject = this.projectsRepository.create({
+      name,
+      description,
+      user,
+    });
     return this.projectsRepository.save(newProject);
   }
 
-  findAll(): Promise<Project[]> {
-    return this.projectsRepository.find();
+  async findAll(user: User | undefined): Promise<Project[]> {
+    switch (user?.role) {
+      case UserRole.ADMIN:
+        return this.projectsRepository.find();
+      case UserRole.USER:
+        return this.projectsRepository.find({
+          where: { user: { id: user.id } },
+        });
+      default:
+        return [MockProject];
+    }
   }
 
   async findOne(id: string): Promise<Project> {

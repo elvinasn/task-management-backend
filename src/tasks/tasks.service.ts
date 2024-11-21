@@ -5,6 +5,7 @@ import { Task } from './task.entity';
 import { Phase } from '../phases/phase.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { MockPhase, MockTask } from 'src/mock-data';
 
 @Injectable()
 export class TasksService {
@@ -16,7 +17,11 @@ export class TasksService {
     private phasesRepository: Repository<Phase>,
   ) {}
 
-  async create(phaseId: string, createTaskDto: CreateTaskDto): Promise<Task> {
+  async create(
+    phaseId: string,
+    createTaskDto: CreateTaskDto,
+    projectId: string,
+  ): Promise<Task> {
     const phase = await this.phasesRepository.findOne({
       where: { id: phaseId },
     });
@@ -24,11 +29,18 @@ export class TasksService {
       throw new NotFoundException(`Phase with ID ${phaseId} not found`);
     }
 
-    const newTask = this.tasksRepository.create({ ...createTaskDto, phase });
+    const newTask = this.tasksRepository.create({
+      ...createTaskDto,
+      phase,
+      projectId,
+    });
     return this.tasksRepository.save(newTask);
   }
 
-  findAllByPhase(phaseId: string): Promise<Task[]> {
+  async findAllByPhase(phaseId: string): Promise<Task[]> {
+    if (phaseId === MockPhase.id) {
+      return [MockTask];
+    }
     return this.tasksRepository.find({
       where: { phase: { id: phaseId } },
     });

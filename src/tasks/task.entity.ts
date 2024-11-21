@@ -40,6 +40,9 @@ export class Task {
   @RelationId((task: Task) => task.phase)
   phaseId: string;
 
+  @Column({ nullable: false, type: 'uuid' })
+  projectId: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

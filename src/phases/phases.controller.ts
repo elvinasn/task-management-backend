@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Post,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { PhasesService } from './phases.service';
 import { UpdatePhaseDto } from './dto/update-phase.dto';
@@ -21,6 +22,10 @@ import {
 } from '@nestjs/swagger';
 import { TasksService } from 'src/tasks/tasks.service';
 import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
+import { PhaseGuard } from './phase.guard';
+import { JwtAuthGuard, OptionalJwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Phase } from './phase.entity';
+import { GetPhase } from './get-phase.decorator';
 
 @ApiTags('Phases')
 @Controller('phases')
@@ -39,6 +44,7 @@ export class PhasesController {
     description: 'Record not found',
   })
   @ApiOperation({ summary: 'Get a phase' })
+  @UseGuards(JwtAuthGuard, PhaseGuard)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.phasesService.findOne(id);
   }
@@ -55,6 +61,7 @@ export class PhasesController {
     description: 'Unprocessable Entity',
   })
   @ApiOperation({ summary: 'Update a phase' })
+  @UseGuards(JwtAuthGuard, PhaseGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePhaseDto: UpdatePhaseDto,
@@ -78,6 +85,7 @@ export class PhasesController {
     status: 204,
     description: 'Record deleted successfully',
   })
+  @UseGuards(JwtAuthGuard, PhaseGuard)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.phasesService.remove(id);
   }
@@ -89,15 +97,14 @@ export class PhasesController {
     description: 'The record has been successfully created.',
   })
   @ApiOperation({ summary: 'Create a task' })
-  createTask(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() createTaskDto: CreateTaskDto,
-  ) {
-    return this.tasksService.create(id, createTaskDto);
+  @UseGuards(JwtAuthGuard, PhaseGuard)
+  createTask(@GetPhase() phase: Phase, @Body() createTaskDto: CreateTaskDto) {
+    return this.tasksService.create(phase.id, createTaskDto, phase.projectId);
   }
 
   @Get(':id/tasks')
   @ApiOperation({ summary: 'Get all tasks for a phase' })
+  @UseGuards(OptionalJwtAuthGuard, PhaseGuard)
   findAllTasks(@Param('id', ParseUUIDPipe) id: string) {
     return this.tasksService.findAllByPhase(id);
   }

@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Phase } from './phase.entity';
 import { Project } from '../projects/project.entity';
+import { MockPhase, MockProject } from 'src/mock-data';
 
 @Injectable()
 export class PhasesService {
@@ -67,6 +68,9 @@ export class PhasesService {
     return this.phasesRepository.save(phase);
   }
   async findAllByProject(projectId: string): Promise<Phase[]> {
+    if (projectId === MockProject.id) {
+      return [MockPhase];
+    }
     const project = await this.projectsRepository.findOneBy({ id: projectId });
     if (!project) {
       throw new NotFoundException(`Project with ID ${projectId} not found`);
