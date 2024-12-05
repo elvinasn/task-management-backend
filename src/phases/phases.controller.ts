@@ -22,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { TasksService } from 'src/tasks/tasks.service';
 import { CreateTaskDto } from 'src/tasks/dto/create-task.dto';
-import { PhaseGuard } from './phase.guard';
+import { IncludeMockPhase, PhaseGuard } from './phase.guard';
 import { JwtAuthGuard, OptionalJwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Phase } from './phase.entity';
 import { GetPhase } from './get-phase.decorator';
@@ -44,8 +44,9 @@ export class PhasesController {
     description: 'Record not found',
   })
   @ApiOperation({ summary: 'Get a phase' })
-  @UseGuards(JwtAuthGuard, PhaseGuard)
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
+  @UseGuards(OptionalJwtAuthGuard, PhaseGuard)
+  @IncludeMockPhase(true)
+  findOne(@Param('id') id: string) {
     return this.phasesService.findOne(id);
   }
 
@@ -105,7 +106,8 @@ export class PhasesController {
   @Get(':id/tasks')
   @ApiOperation({ summary: 'Get all tasks for a phase' })
   @UseGuards(OptionalJwtAuthGuard, PhaseGuard)
-  findAllTasks(@Param('id', ParseUUIDPipe) id: string) {
+  @IncludeMockPhase(true)
+  findAllTasks(@Param('id') id: string) {
     return this.tasksService.findAllByPhase(id);
   }
 }

@@ -16,6 +16,7 @@ export class UsersController {
       full_name: user.full_name,
       email: user.email,
       image_url: user.image_url,
+      role: user.role,
     } as User;
   }
 }

@@ -82,6 +82,9 @@ export class PhasesService {
   }
 
   async findOne(id: string): Promise<Phase> {
+    if (id === MockPhase.id) {
+      return MockPhase;
+    }
     const phase = await this.phasesRepository.findOneBy({ id });
     if (!phase) {
       throw new NotFoundException(`Phase with ID ${id} not found`);

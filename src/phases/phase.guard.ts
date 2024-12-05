@@ -11,7 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserRole } from 'src/users/user-role.enum';
 import { Reflector } from '@nestjs/core';
-import { MockPhase, MockProject } from 'src/mock-data';
+import { MockPhase } from 'src/mock-data';
 import { Project } from 'src/projects/project.entity';
 import { Phase } from './phase.entity';
 
@@ -38,18 +38,17 @@ export class PhaseGuard implements CanActivate {
     const includeMockPhase =
       this.reflector.get<boolean>(IncludeMockPhase, context.getHandler()) ??
       false;
-
     if (
       !(
         phaseId.match(
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/,
         ) ||
-        (includeMockPhase && phaseId === MockProject.id)
+        (includeMockPhase && phaseId === MockPhase.id)
       )
     ) {
       throw new BadRequestException('Invalid format of project ID');
     }
-    if (includeMockPhase && phaseId === MockProject.id) {
+    if (includeMockPhase && phaseId === MockPhase.id) {
       request.phase = MockPhase;
       return true;
     }
