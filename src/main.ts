@@ -8,7 +8,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.enableCors({
     credentials: true,
-    origin: ['*'],
+    origin: '*',
   });
   const config = new DocumentBuilder()
     .setTitle('Task Management API')
